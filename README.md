@@ -1,11 +1,11 @@
-#There are two approaches to confine user in system:
+# There are two approaches to confine user in system:
 1. Use confined bash.
 2. Use hat for sshd or login daemon.
 
 If confined user escalate his privilees - root inherit all constrains, so it can reduce some of attacks.
 
 
-##Use confined bash
+## Use confined bash
 1. We want confine user stuff.
 2. Copy bash to other dir, for example `/opt/bash`.
 3. Change shell path on `/opt/bash` in `/etc/passwd` for user stuff.
@@ -15,7 +15,7 @@ If confined user escalate his privilees - root inherit all constrains, so it can
 7. Login as user stuff in console.
 
 
-##Use hat for sshd
+## Use hat for sshd
 1. We want to confine user test.
 2. Add `session  required  pam_apparmor.so order=user,group,default`  in `/etc/pam.d/sshd` file.
 3. Create hat `^test { ... }` for user test in `/etc/apparmor.d/usr.sbin.sshd` profile.
