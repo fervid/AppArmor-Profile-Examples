@@ -1,0 +1,184 @@
+# Last Modified: Wed Mar  7 11:25:17 2018
+#include <tunables/global>
+
+# ------------------------------------------------------------------
+#
+#    Copyright (C) 2002-2005 Novell/SUSE
+#    Copyright (C) 2012 Canonical Ltd.
+#    Copyright (C) 2015-2016 Simon Deziel
+#
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of version 2 of the GNU General Public
+#    License published by the Free Software Foundation.
+#
+# ------------------------------------------------------------------
+# will need to revalidate this profile once we finish re-architecting
+# the change_hat patch.
+#
+# vim:syntax=apparmor
+
+
+/usr/sbin/sshd {
+  #include <abstractions/authentication>
+  #include <abstractions/base>
+  #include <abstractions/consoles>
+  #include <abstractions/libpam-systemd>
+  #include <abstractions/lxc/container-base>
+  #include <abstractions/lxc/start-container>
+  #include <abstractions/nameservice>
+  #include <abstractions/python>
+  #include <abstractions/wutmp>
+
+  deny capability net_admin,
+
+  /bin/nano rix,
+  /bin/ps rix,
+  /bin/systemctl rix,
+  /usr/bin/passwd Cx -> passwd,
+  /usr/bin/python3.6 ix,
+  /usr/lib/openssh/sftp-server PUx,
+  /usr/sbin/aa-complain rix,
+  /usr/sbin/aa-enforce rix,
+  /usr/sbin/aa-logprof rix,
+  /usr/sbin/sshd mrix,
+  /{usr/,}bin/ash rUx,
+  /{usr/,}bin/bash rUx,
+  /{usr/,}bin/bash2 rUx,
+  /{usr/,}bin/bsh rUx,
+  /{usr/,}bin/csh rUx,
+  /{usr/,}bin/dash rUx,
+  /{usr/,}bin/false rUx,
+  /{usr/,}bin/ksh rUx,
+  /{usr/,}bin/sh rUx,
+  /{usr/,}bin/tcsh rUx,
+  /{usr/,}bin/zsh rUx,
+  /{usr/,}bin/zsh4 rUx,
+  /{usr/,}bin/zsh5 rUx,
+  /{usr/,}sbin/nologin rUx,
+
+
+  profile passwd {
+    #include <abstractions/authentication>
+    #include <abstractions/base>
+    #include <abstractions/nameservice>
+
+    capability audit_write,
+    capability chown,
+    capability fsetid,
+    capability ipc_lock,
+    capability setgid,
+    capability setuid,
+    /dev/pts/[0-9]* rw,
+    /usr/bin/gnome-keyring-daemon ix,
+    /usr/bin/passwd r,
+    /{,var/}run/utmp rwk,
+    owner /etc/.pwd.lock rwk,
+    owner /etc/nshadow rw,
+    owner /etc/shadow rw,
+    owner @{HOME}/.cache/keyring-*/ rw,
+    owner @{HOME}/.cache/keyring-*/control rw,
+    owner @{PROC}/@{pid}/loginuid r,
+    owner @{PROC}/@{pid}/status r,
+
+  }
+
+  ^test {
+    #include <abstractions/base>
+    #include <abstractions/bash>
+  
+    capability setuid,
+    capability setgid,
+    capability sys_resource,
+    capability audit_write,  
+    capability dac_read_search,
+    capability dac_override,
+    capability chown,
+  
+    network netlink raw,
+    network inet stream,
+
+    dbus,
+
+
+    /bin/bash          rix,
+    /bin/dash          rix,
+    /usr/bin/env       rix,
+    /usr/bin/bash      rix,
+    /bin/run-parts     rix,
+    /bin/lesspipe      rix,
+    /usr/bin/lesspipe  rix,
+    /bin/ps            rix,
+    /usr/bin/groups    rix,
+    /usr/bin/id        rix,
+    /usr/bin/mesg      rix,
+    /usr/bin/basename  rix,
+    /usr/bin/dirname   rix,
+    /usr/bin/sudo      rix,
+    /usr/share/bash-completion/bash_completion  rix,
+
+
+    /etc/group         r,
+    owner /etc/shadow        r,
+    /etc/passwd        r,
+    /etc/sudoers       r,
+    /etc/sudoers.d/    r,
+    /etc/sudoers.d/*   r,
+    /etc/sudoers.d/**  r,
+    /etc/init.d/       r, 
+    /etc/host.conf     r, 
+    /etc/nsswitch.conf r, 
+    /etc/hosts         r,
+    /etc/login.defs    r, 
+    /etc/securetty     r, 
+    /etc/environment   r,
+    /etc/resolv.conf   r,
+    /etc/pam.d/sudo    r, 
+    /etc/pam.d/other   r, 
+    /etc/pam.d/common-auth         r,
+    /etc/pam.d/common-account      r,
+    /etc/pam.d/common-auth         r,
+    /etc/pam.d/common-password     r,
+    /etc/pam.d/common-session      r,
+    /etc/default/locale            r,
+    /etc/security/pam_env.conf     r, 
+    /etc/security/capability.conf  r, 
+    /etc/security/limits.conf      r,
+    /etc/security/limits.d/        r,
+    /etc/pam.d/common-session-noninteractive   r,
+
+
+    /dev/       r,
+    owner /dev/tty*   rw, 
+    owner /dev/pts/*  rw,
+    /dev/ptmx   rw,
+
+
+    /usr/lib/sudo/sudoers.so          mr,      
+    /{usr/,}lib{,32,64}/**            mr, 
+    /lib/x86_64-linux-gnu/security/*  mr, 
+
+
+    /run/sudo/             r, 
+    owner /run/sudo/*            rwk, 
+    /run/utmp              rk,
+    /run/motd.dynamic      rw,
+    /run/motd.dynamic.new  rw,
+    /run/dbus/system_bus_socket            rw, 
+    /run/systemd/resolve/stub-resolv.conf  r, 
+
+    owner @{HOME}/  r,
+    owner @{HOME}/* rw,
+
+    /proc/            r,
+    /proc/uptime      r,  
+    owner /proc/*/status    r, 
+    owner /proc/*/stat      r, 
+    owner /proc/*/fd/       r,
+    owner /proc/*/uid_map   r,
+    owner /proc/*/loginuid  rw,
+    owner /proc/*/limits    r,
+    /proc/sys/kernel/osrelease  r,
+    /proc/sys/kernel/pid_max    r,
+  }
+
+}
